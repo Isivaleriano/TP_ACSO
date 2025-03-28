@@ -303,8 +303,8 @@ Instruction decode_instruction(uint32_t hex) {
             inst.imm = ((hex >> 12) & 0x1FF); // offset inmediato de 9 bits
             break;
 
-            case 0x488: // ADD (inmediato, shift = 0)
-            case 0x48a: { // ADD (inmediato, shift = 1)
+        case 0x488: // ADD (inmediato, shift = 0)
+        case 0x48a: { // ADD (inmediato, shift = 1)
                 printf("→ Detectado ADD (inmediato)\n");
                 inst.opcode = OP_ADD;
                 inst.rd = rd;
@@ -338,11 +338,6 @@ Instruction decode_instruction(uint32_t hex) {
                 inst.uses_imm = 0;
                 break;
     
-            
-            
-        
-     
-        
             
         default:
             inst.opcode = OP_UNKNOWN;

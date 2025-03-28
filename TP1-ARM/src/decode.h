@@ -12,17 +12,37 @@ typedef enum {
     OP_EOR,
     OP_ORR,
     OP_B,
+    OP_BEQ,
+    OP_BNE,
+    OP_BGT,
+    OP_BLT,
+    OP_BLE,
+    OP_BGE,
+    OP_LSL,
+    OP_LSR,
+    OP_STUR,
+    OP_STURB,
+    OP_STURH,
+    OP_LDUR,
+    OP_LDURH,
+    OP_LDURB,
+    OP_MOVZ,
+    OP_ADD,
+    OP_MUL,
+    OP_CBZ,
+    OP_CBNZ,
     OP_HLT
 } Opcode;
 
 typedef struct {
     Opcode opcode;
-    int rd;
-    int rn;
-    int rm;
+    int rd, rn, rm, rt;
     int imm;
     int uses_imm;
     int branch_offset;
+    int hw; 
+    int shift; 
+    int offset;
     uint32_t raw;
 } Instruction;
 

@@ -169,50 +169,49 @@ Instruction decode_instruction(uint32_t hex) {
             inst.uses_imm = 0;
             break;
 
-        case 0x758: { // SUBS / CMP (shift = 00 o 01)
+        case 0x758: {
             uint32_t shift = (hex >> 22) & 0x3;
-
-            if (shift == 0b00) {
-                if (rd == 31) {
-                    inst.opcode = OP_CMP;
-                    inst.rn = (hex >> 5) & 0x1F;
-                    inst.rm = (hex >> 16) & 0x1F;
-                    inst.uses_imm = 0;
-                    printf("→ Detectado CMP (registro)\n");
+        
+            if (rd == 31) {
+                // Es un CMP
+                inst.opcode = OP_CMP;
+                inst.rn = (hex >> 5) & 0x1F;
+        
+                if (shift == 0b00) {
+                    inst.imm = (hex >> 10) & 0xFFF;
+                } else if (shift == 0b01) {
+                    inst.imm = (hex >> 10) & 0xFFF;
+                    inst.imm <<= 12;
+                    printf("→ Shift aplicado: imm <<= 12 → %d\n", inst.imm);
                 } else {
-                    inst.opcode = OP_SUBS;
-                    inst.rd = rd;
-                    inst.rn = (hex >> 5) & 0x1F;
+                    printf("⚠️ CMP con shift no soportado: shift = %d\n", shift);
+                }
+        
+                inst.uses_imm = 1;
+                printf("→ Detectado CMP (inmediato)\n");
+            } else {
+                // Es un SUBS
+                inst.opcode = OP_SUBS;
+                inst.rd = rd;
+                inst.rn = (hex >> 5) & 0x1F;
+        
+                if (shift == 0b00) {
                     inst.rm = (hex >> 16) & 0x1F;
                     inst.uses_imm = 0;
                     printf("→ Detectado SUBS (registro)\n");
-                }
-            } else {
-                if (rd == 31) {
-                    inst.opcode = OP_CMP;
-                    inst.rn = (hex >> 5) & 0x1F;
+                } else if (shift == 0b01) {
                     inst.imm = (hex >> 10) & 0xFFF;
-                    if (shift == 0b01) {
-                        inst.imm <<= 12;
-                        printf("→ Shift aplicado: imm <<= 12 → %d\n", inst.imm);
-                    }
+                    inst.imm <<= 12;
                     inst.uses_imm = 1;
-                    printf("→ Detectado CMP (inmediato)\n");
+                    printf("→ Detectado SUBS (inmediato con shift): X%d = X%d - #%d\n",
+                           inst.rd, inst.rn, inst.imm);
                 } else {
-                    inst.opcode = OP_SUBS;
-                    inst.rd = rd;
-                    inst.rn = (hex >> 5) & 0x1F;
-                    inst.imm = (hex >> 10) & 0xFFF;
-                    if (shift == 0b01) {
-                        inst.imm <<= 12;
-                        printf("→ Shift aplicado: imm <<= 12 → %d\n", inst.imm);
-                    }
-                    inst.uses_imm = 1;
-                    printf("→ Detectado SUBS (inmediato)\n");
+                    printf("⚠️ SUBS con shift no soportado: shift = %d\n", shift);
                 }
             }
             break;
         }
+            
 
         case 0x788: // SUBS (inmediato con shift == 01)
             inst.opcode = OP_SUBS;
@@ -303,8 +302,8 @@ Instruction decode_instruction(uint32_t hex) {
             inst.imm = ((hex >> 12) & 0x1FF); // offset inmediato de 9 bits
             break;
 
-        case 0x488: // ADD (inmediato, shift = 0)
-        case 0x48a: { // ADD (inmediato, shift = 1)
+            case 0x488: // ADD (inmediato, shift = 0)
+            case 0x48a: { // ADD (inmediato, shift = 1)
                 printf("→ Detectado ADD (inmediato)\n");
                 inst.opcode = OP_ADD;
                 inst.rd = rd;
@@ -338,6 +337,11 @@ Instruction decode_instruction(uint32_t hex) {
                 inst.uses_imm = 0;
                 break;
     
+            
+            
+        
+     
+        
             
         default:
             inst.opcode = OP_UNKNOWN;

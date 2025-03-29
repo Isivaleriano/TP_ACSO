@@ -26,22 +26,34 @@ void execute_instruction(Instruction inst) {
         case OP_SUBS:
             if (inst.uses_imm) {
                 int64_t result = CURRENT_STATE.REGS[inst.rn] - inst.imm;
-                NEXT_STATE.REGS[inst.rd] = result;
+        
+                if (inst.rd != 31) {
+                    NEXT_STATE.REGS[inst.rd] = result;
+                }
+        
                 NEXT_STATE.FLAG_Z = (result == 0);
                 NEXT_STATE.FLAG_N = (result < 0);
-                printf("→ Ejecutado SUBS (imm): X%d = X%d - #%d = %ld\n",
+        
+                printf("→ Ejecutado %s (imm): X%d = X%d - #%d = %ld\n",
+                       inst.rd == 31 ? "CMP" : "SUBS",
                        inst.rd, inst.rn, inst.imm, result);
             } else {
                 int64_t result = CURRENT_STATE.REGS[inst.rn] - CURRENT_STATE.REGS[inst.rm];
-                NEXT_STATE.REGS[inst.rd] = result;
+        
+                if (inst.rd != 31) {
+                    NEXT_STATE.REGS[inst.rd] = result;
+                }
+        
                 NEXT_STATE.FLAG_Z = (result == 0);
                 NEXT_STATE.FLAG_N = (result < 0);
-                printf("→ Ejecutado SUBS (reg): X%d = X%d - X%d = %ld\n",
+        
+                printf("→ Ejecutado %s (reg): X%d = X%d - X%d = %ld\n",
+                       inst.rd == 31 ? "CMP" : "SUBS",
                        inst.rd, inst.rn, inst.rm, result);
             }
             NEXT_STATE.PC = CURRENT_STATE.PC + 4;
             break;
-
+        
         case OP_CMP:
             if (inst.uses_imm) {
                 int64_t result = CURRENT_STATE.REGS[inst.rn] - inst.imm;
@@ -293,25 +305,26 @@ void execute_instruction(Instruction inst) {
             NEXT_STATE.PC = CURRENT_STATE.PC + 4;
             break;
 
-        case OP_CBZ:
-            if (CURRENT_STATE.REGS[inst.rn] == 0) {
+            case OP_CBZ:
+            if (CURRENT_STATE.REGS[inst.rt] == 0) {
                 NEXT_STATE.PC = CURRENT_STATE.PC + inst.branch_offset;
-                printf("→ Ejecutado CBZ: X%d es 0 → salto a PC + %d\n", inst.rn, inst.branch_offset);
+                printf("→ Ejecutado CBZ: X%d es 0 → salto a PC = 0x%lx\n", inst.rt, NEXT_STATE.PC);
             } else {
                 NEXT_STATE.PC = CURRENT_STATE.PC + 4;
-                printf("→ Ejecutado CBZ: X%d no es 0 → no salta\n", inst.rn);
+                printf("→ Ejecutado CBZ: X%d no es 0 → no salta\n", inst.rt);
             }
             break;
         
         case OP_CBNZ:
-            if (CURRENT_STATE.REGS[inst.rn] != 0) {
+            if (CURRENT_STATE.REGS[inst.rt] != 0) {
                 NEXT_STATE.PC = CURRENT_STATE.PC + inst.branch_offset;
-                printf("→ Ejecutado CBNZ: X%d != 0, salto a PC = 0x%lx\n", inst.rn, NEXT_STATE.PC);
+                printf("→ Ejecutado CBNZ: X%d != 0 → salto a PC = 0x%lx\n", inst.rt, NEXT_STATE.PC);
             } else {
                 NEXT_STATE.PC = CURRENT_STATE.PC + 4;
-                printf("→ Ejecutado CBNZ: X%d == 0, no salto\n", inst.rn);
+                printf("→ Ejecutado CBNZ: X%d == 0 → no salto\n", inst.rt);
             }
             break;
+        
         
 
         default:
@@ -321,3 +334,4 @@ void execute_instruction(Instruction inst) {
             break;
     }
 }
+

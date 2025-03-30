@@ -49,5 +49,6 @@ typedef struct {
 
 Instruction decode_instruction(uint32_t instruction_hex);
 int decode_movz(uint32_t hex, uint32_t opcode, Instruction* inst);
+int decode_shift(uint32_t hex, Instruction* inst);
 
 #endif

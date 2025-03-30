@@ -259,6 +259,36 @@ int decode_movz(uint32_t hex, uint32_t opcode, Instruction* inst) {
     return 0;
 }
 
+// ==== SHIFT ====
+
+int decode_shift(uint32_t hex, Instruction* inst) {
+    if ((hex & 0x7F800000) == 0x53000000) {
+        uint32_t immr = (hex >> 16) & 0x3F;
+        uint32_t imms = (hex >> 10) & 0x3F;
+
+        if (immr == (64 - (63 - imms))) {
+            printf("→ Detectado LSL (inmediato)\n");
+            inst->opcode = OP_LSL;
+            inst->rd = hex & 0x1F;
+            inst->rn = (hex >> 5) & 0x1F;
+            inst->shift = 63 - imms;
+            inst->uses_imm = 1;
+            return 1;
+        }
+
+        if (imms == 63) {
+            printf("→ Detectado LSR (inmediato)\n");
+            inst->opcode = OP_LSR;
+            inst->rd = hex & 0x1F;
+            inst->rn = (hex >> 5) & 0x1F;
+            inst->shift = immr;
+            inst->uses_imm = 1;
+            return 1;
+        }
+    }
+    return 0;
+}
+
 // ==== MAIN DECODER ====
 
 Instruction decode_instruction(uint32_t hex) {

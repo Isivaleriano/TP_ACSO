@@ -12,6 +12,7 @@ typedef enum {
     OP_EOR,
     OP_ORR,
     OP_B,
+    OP_BR,
     OP_BEQ,
     OP_BNE,
     OP_BGT,

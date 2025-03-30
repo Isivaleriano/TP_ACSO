@@ -357,7 +357,14 @@ Instruction decode_instruction(uint32_t hex) {
                 inst.rm = (hex >> 16) & 0x1F;
                 inst.uses_imm = 0;
                 break;
-    
+            
+            case 0x6B0: { // BR (unconditional register branch)
+                    inst.opcode = OP_BR;
+                    inst.rn = (hex >> 5) & 0x1F; // Xn (registro con dirección)
+                    printf("→ Detectado BR: salto a dirección contenida en X%d\n", inst.rn);
+                    break;
+                }
+                
             
         default:
             inst.opcode = OP_UNKNOWN;

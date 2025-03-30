@@ -1,7 +1,8 @@
 .text
-movz X1, 0x0018           // X1 = 0x18
-add X1, X1, #0x400000     // X1 = 0x400018
-br X1
-movz X2, 99               // esta NO debe ejecutarse
-movz X2, 42
-hlt 0
+    movz X1, #0x1010     // dirección a saltar (válida en MOVZ)
+    br X1                // salta a 0x1010
+    movz X0, #123        // no se ejecuta
+
+    // dirección 0x1010
+    movz X1, #999        // sí se ejecuta
+    hlt 0

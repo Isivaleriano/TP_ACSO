@@ -357,7 +357,14 @@ Instruction decode_instruction(uint32_t hex) {
                 inst.rm = (hex >> 16) & 0x1F;
                 inst.uses_imm = 0;
                 break;
-    
+            
+            case 0x6B0: { // BR (unconditional register branch)
+                    inst.opcode = OP_BR;
+                    inst.rn = (hex >> 5) & 0x1F; // Xn (registro con dirección)
+                    printf("→ Detectado BR: salto a dirección contenida en X%d\n", inst.rn);
+                    break;
+                }
+                
             
         default:
             inst.opcode = OP_UNKNOWN;
@@ -368,11 +375,7 @@ Instruction decode_instruction(uint32_t hex) {
     return inst;
 }
 
-
-
-
-
-#################### EXECUTE ###################
+###################EXECUTE#####################
 #include "execute.h"
 #include "shell.h"
 #include <stdio.h>
@@ -569,7 +572,8 @@ void execute_instruction(Instruction inst) {
             printf("→ Ejecutado LSL: X%d = X%d << #%d = 0x%lx\n",
                    inst.rd, inst.rn, inst.shift, NEXT_STATE.REGS[inst.rd]);
             NEXT_STATE.PC = CURRENT_STATE.PC + 4;
-            break;    
+            break;  
+              
         case OP_LSR:
             NEXT_STATE.REGS[inst.rd] = ((uint64_t)CURRENT_STATE.REGS[inst.rn]) >> inst.shift;
             printf("→ Ejecutado LSR: X%d = X%d >> #%d = 0x%lx\n",
@@ -700,7 +704,11 @@ void execute_instruction(Instruction inst) {
             }
             break;
         
-        
+        case OP_BR:
+            NEXT_STATE.PC = CURRENT_STATE.REGS[inst.rn];
+            printf("→ Ejecutado BR: salto a dirección contenida en X%d = 0x%lx\n",
+                   inst.rn, NEXT_STATE.PC);
+            break;
 
         default:
             printf("⚠️ Instrucción no soportada (OP_UNKNOWN)\n");

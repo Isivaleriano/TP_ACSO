@@ -41,7 +41,6 @@ void execute_instruction(Instruction inst) {
             int64_t operand2 = inst.uses_imm ? inst.imm : CURRENT_STATE.REGS[inst.rm];
             int64_t result = CURRENT_STATE.REGS[inst.rn] - operand2;
         
-            // Guardamos el resultado si no es CMP
             if (inst.rd != 31) {
                 NEXT_STATE.REGS[inst.rd] = result;
             }

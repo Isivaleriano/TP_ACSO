@@ -1,8 +1,8 @@
 .text
     movz X1, 7
     movz X2, 7
-    cmp X1, X2        // 7 - 7 = 0 → FLAG_Z = 1
-    ble salto         // salta
+    cmp X1, X2       
+    ble salto        
     movz X3, 99
 salto:
     movz X3, 123

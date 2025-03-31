@@ -1,4 +1,4 @@
 .text
-movz X3, 0x40        // X3 = 0x40 (64 decimal → 0b1000000)
-lsr X4, X3, 2        // X4 = X3 >> 2 → 0x10 (16 decimal)
+movz X3, 0x40        
+lsr X4, X3, 2        
 hlt 0

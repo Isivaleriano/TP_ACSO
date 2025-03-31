@@ -234,7 +234,7 @@ void execute_instruction(Instruction inst) {
             uint64_t addr = CURRENT_STATE.REGS[inst.rn] + inst.imm;
             uint16_t value = CURRENT_STATE.REGS[inst.rt] & 0xFFFF;
         
-            uint32_t old = mem_read_32(addr & ~0x3); // Alinear a 4 bytes
+            uint32_t old = mem_read_32(addr & ~0x3); 
             uint32_t shift = (addr & 0x3) * 8;
             uint32_t mask = 0xFFFF << shift;
             uint32_t new_value = (old & ~mask) | (value << shift);

@@ -274,4 +274,3 @@ void test_ej1b(char* filename)
 
 	RUN(filename, fprintf(pfile, "======================== Fin del test 1b =======================");)
 	}
-

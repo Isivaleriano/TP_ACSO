@@ -1,0 +1,50 @@
+Isidro Valeriano
+ivaleriano@udesa.edu.ar 
+
+Descripcion de las Fases:
+
+La fase 1 de la bomba verifica si la cadena ingresada por el usuario coincide exactamente con 
+una cadena almacenada en el binario. Internamente, el programa utiliza una función llamada 
+strings_not_equal, que compara el input del usuario (registrado en rdi) con una cadena 
+constante cargada en el registro rsi. Si ambas cadenas no coinciden carácter por carácter, se 
+llama a la función explode_bomb y el programa finaliza abruptamente. Para resolver esta fase, 
+desensamblamos el código con objdump y luego utilizamos gdb para establecer un breakpoint justo 
+antes del llamado a strings_not_equal. Inspeccionamos los registros con x/s $rdi y x/s $rsi 
+para identificar la diferencia entre lo ingresado y lo esperado. Una vez identificada la 
+cadena correcta en memoria, la copiamos exactamente como primera línea del archivo input.txt, 
+logrando desactivar esta fase sin detonar la bomba.
+
+La fase 2 te pide tres números. Lo primero que hace es convertir ese input a números enteros. 
+Guarda el primero en rbp, el segundo en rbx, y el tercero en r12d. Después hace un xor entre el 
+primero y el segundo, y el resultado lo divide por 2 con signo (sar). Compara eso con el 
+tercer número. Si no da igual, explota la bomba. Pero no termina ahí: incluso si da igual, 
+pasa ese tercer número a una función llamada misterio. Esa función lo único que hace es 
+fijarse si el número es negativo. Si lo es, no hace nada. Pero si es cero o positivo, explota 
+igual. Entonces para que no explote, el tercer número tiene que ser exactamente igual a 
+(primer número XOR segundo) dividido por 2, y además tiene que ser negativo. 
+Por ejemplo, -3 2 -1 funciona, porque -3 XOR 2 = -1, dividido 2 (con signo) da -1, y -1 es negativo, 
+así que no explota. Para resolver esta fase entonces, analice paso a paso la fase y busque pense los
+valores que cumplian con las condiciones de a uno.
+
+En la fase 3, el programa me pedía ingresar una palabra y un número. Internamente, leía una lista de 
+palabras desde un archivo y usaba una función llamada cuenta para buscar la palabra en esa lista. Lo 
+interesante es que cuenta no devolvía simplemente la posición o si la palabra existía, sino que iba 
+acumulando los índices medios (mid) recorridos durante una búsqueda binaria, y el resultado final era un
+número único para cada palabra, según el recorrido hecho. Para pasar la fase, ese número tenía que ser 
+mayor a 9999 y además coincidir exactamente con el número que yo ingresara. Como sabía que la lista estaba 
+ordenada alfabéticamente, empecé buscando un valor medio y usé GDB para observar el valor que devolvía 
+cuenta, y a partir de ahí fui afinando el input, probando palabras más arriba o más 
+abajo en la lista hasta encontrar una cuyo valor coincidiera exactamente con el número esperado. Con esa 
+combinación, pude superar la fase sin que explote la bomba.
+
+La fase 4 requería ingresar una cadena de exactamente seis caracteres. El programa aplicaba 
+una transformación a cada carácter mediante una máscara de bits (AND 0xF) y una tabla de 
+sustitución (array.0), generando una nueva palabra. Esta palabra transformada se comparaba 
+luego con una cadena oculta esperada por el programa (en este caso, "felina"). Si coincidía, 
+se superaba la fase; de lo contrario, la bomba explotaba. Para resolverla, primero 
+identifique con GDB que la función previa a la validación devolvía la longitud de la cadena, 
+por lo que el input debía tener exactamente seis caracteres. Luego coloque un breakpoint en 
+la instrucción que aplicaba la transformación carácter por carácter, y mediante ejecución paso 
+a paso (nexti) e inspección de memoria (x/s), fuimos determinando qué letras iniciales 
+generaban los caracteres deseados en la palabra "felina". Así, construi el input correcto 
+mediante la transformacion del abecedario y buscando las palabras.

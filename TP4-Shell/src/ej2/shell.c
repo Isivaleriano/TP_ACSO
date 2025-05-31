@@ -27,55 +27,68 @@ int main() {
             token = strtok(NULL, "|");
         }
 
-        int prev_pipe[2];
+        int pipes[MAX_COMMANDS - 1][2];  
+
+        for (int i = 0; i < command_count - 1; i++) {
+            if (pipe(pipes[i]) == -1) {
+                perror("pipe");
+                exit(EXIT_FAILURE);
+            }
+        }
+
+        if (command_count == 1) {
+            wordexp_t p;
+            if (wordexp(commands[0], &p, 0) == 0) {
+                if (strcmp(p.we_wordv[0], "exit") == 0) {
+                    wordfree(&p);
+                    break;
+                }
+                wordfree(&p);
+            }
+        }
 
         for (int i = 0; i < command_count; i++) {
-            int pipefd[2];
-            if (i < command_count - 1) {
-                pipe(pipefd);
+            pid_t pid = fork();
+            if (pid == -1) {
+                perror("fork");
+                exit(EXIT_FAILURE);
             }
 
-            pid_t pid = fork();
-            if (pid == 0) {
+            if (pid == 0) { 
                 if (i > 0) {
-                    dup2(prev_pipe[0], STDIN_FILENO);
-                    close(prev_pipe[0]);
-                    close(prev_pipe[1]);
+                    dup2(pipes[i - 1][0], STDIN_FILENO);
                 }
 
                 if (i < command_count - 1) {
-                    close(pipefd[0]);
-                    dup2(pipefd[1], STDOUT_FILENO);
-                    close(pipefd[1]);
+                    dup2(pipes[i][1], STDOUT_FILENO);
+                }
 
+                for (int j = 0; j < command_count - 1; j++) {
+                    close(pipes[j][0]);
+                    close(pipes[j][1]);
                 }
 
                 wordexp_t p;
-                wordexp(commands[i], &p, 0);  
+                if (wordexp(commands[i], &p, 0) != 0) {
+                    fprintf(stderr, "Error en wordexp\n");
+                    exit(EXIT_FAILURE);
+                }
 
                 execvp(p.we_wordv[0], p.we_wordv);
                 perror("execvp");
                 wordfree(&p);
-                exit(1);
+                exit(EXIT_FAILURE);
             }
+        }
 
-            if (i > 0) {
-                close(prev_pipe[0]);
-                close(prev_pipe[1]);
-            }
-
-            if (i < command_count - 1) {
-                prev_pipe[0] = pipefd[0];
-                prev_pipe[1] = pipefd[1];
-                close(pipefd[1]);
-            }
+        for (int i = 0; i < command_count - 1; i++) {
+            close(pipes[i][0]);
+            close(pipes[i][1]);
         }
 
         for (int i = 0; i < command_count; i++) {
             wait(NULL);
         }
-
     }
     return 0;
 }
-

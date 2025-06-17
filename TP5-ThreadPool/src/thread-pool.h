@@ -11,6 +11,7 @@
 
 using namespace std;
 
+
 typedef struct worker {
     thread ts;                        
     function<void(void)> thunk;         
@@ -41,10 +42,16 @@ private:
     Semaphore taskAvailable{0};   
 
     bool done;                   
+    bool isShuttingDown;    
+    mutex shutdownLock;          
 
     int tasksInFlight = 0;      
     mutex tasksLock;            
-    Semaphore allDone{0};        
+    Semaphore allDone{0};   
+    
+    int waiters = 0;
+    mutex waitersLock;
+
 };
 
 #endif

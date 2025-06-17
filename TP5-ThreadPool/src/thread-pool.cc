@@ -1,7 +1,7 @@
 #include "thread-pool.h"
 using namespace std;
 
-ThreadPool::ThreadPool(size_t numThreads) : wts(numThreads), done(false) {
+ThreadPool::ThreadPool(size_t numThreads) : wts(numThreads), done(false), isShuttingDown(false) {
     for (size_t i = 0; i < numThreads; ++i) {
         wts[i].ts = thread([this, i] { worker(i); });
     }
@@ -9,16 +9,30 @@ ThreadPool::ThreadPool(size_t numThreads) : wts(numThreads), done(false) {
 }
 
 void ThreadPool::schedule(const function<void(void)>& thunk) {
+    if (!thunk) {
+        throw invalid_argument("Cannot schedule nullptr task.");
+    }
+
+    {
+        lock_guard<mutex> lock(shutdownLock);
+        if (done || isShuttingDown) {
+            throw runtime_error("Cannot schedule tasks after shutdown.");
+        }
+    }
+
     {
         lock_guard<mutex> lock(queueLock);
         taskQueue.push(thunk);
     }
+
     {
         lock_guard<mutex> lock(tasksLock);
         tasksInFlight++;
     }
-    taskAvailable.signal(); 
+
+    taskAvailable.signal();
 }
+
 
 void ThreadPool::dispatcher() {
     while (true) {
@@ -55,7 +69,7 @@ void ThreadPool::worker(int id) {
         wts[id].ready.wait();
         if (done) break;
 
-        wts[id].thunk(); 
+        wts[id].thunk();
 
         {
             lock_guard<mutex> guard(wts[id].mutex_worker);
@@ -69,22 +83,47 @@ void ThreadPool::worker(int id) {
             if (tasksInFlight == 0) notify = true;
         }
 
-        if (notify) allDone.signal();
+        if (notify) {
+            int n_waiters = 0;
+            {
+                lock_guard<mutex> lock(waitersLock);
+                n_waiters = waiters;
+            }
+            for (int i = 0; i < n_waiters; ++i) {
+                allDone.signal();
+            }
+        }
     }
 }
+
 
 void ThreadPool::wait() {
-    bool shouldWait = false;
     {
         lock_guard<mutex> lock(tasksLock);
-        shouldWait = (tasksInFlight > 0);
+        if (tasksInFlight == 0) return;
     }
-    if (shouldWait) allDone.wait();
+
+    {
+        lock_guard<mutex> lock(waitersLock);
+        waiters++;
+    }
+
+    allDone.wait();
+
+    {
+        lock_guard<mutex> lock(waitersLock);
+        waiters--;
+    }
 }
 
+
 ThreadPool::~ThreadPool() {
-    wait();        
-    done = true;   
+    wait();
+    {
+        lock_guard<mutex> lock(shutdownLock);
+        isShuttingDown = true;
+        done = true;
+    }
 
     taskAvailable.signal(); 
     for (auto& w : wts) w.ready.signal(); 
